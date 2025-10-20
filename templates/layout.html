@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Checklist de Inspeção de Ferramentas – Depósito</title>
+<style>
+:root {
+  --bg: #121417;
+  --card: #1c1f23;
+  --accent: #2eb872;
+  --muted: #a0a8b3;
+  --border: #2a2f34;
+  --text: #e9edf1;
+  --input-bg: #fff;
+}
+
+body {
+  margin: 0;
+  padding: 12px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.container {
+  max-width: 1000px;
+  margin: auto;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 20px;
+  margin-top: 16px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.row > div {
+  flex: 1;
+  min-width: 220px;
+}
+
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+input[type=text],
+select,
+textarea {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 14px;
+  background: var(--input-bg);
+  color: #1e293b;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.items {
+  margin-top: 16px;
+}
+
+.item {
+  background: #1f2327;
+  border-radius: 10px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+  transition: background 0.2s;
+}
+
+.item:hover {
+  background: #24282d;
+}
+
+.item h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.photos {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.photos img {
+  width: 65px;
+  height: 65px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.btn {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn.primary:hover {
+  background: #239e61;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+}
+
+.btn.ghost:hover {
+  background: rgba(46, 184, 114, 0.1);
+}
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.signature-area {
+  margin-top: 20px;
+  background: #1a1d21;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.signature-box {
+  width: 30%;
+  height: 80px;
+  border: 2px dashed #555;
+  border-radius: 2px;
+  background: #fff;
+  touch-action: none;
+}
+
+@media (max-width: 600px) {
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>Checklist de Inspeção de Ferramentas</h1>
+</header>
+
+<div class="card">
+  <div class="row">
+    <div><label>Depósito</label>
+      <select id="deposit"><option value="">Selecione um depósito</option></select>
+    </div>
+  </div>
+
+  <div class="items" id="itemsContainer"></div>
+  <p id="emptyNote" style="display:none;color:#777;text-align:center;">Nenhuma ferramenta para este depósito.</p>
+
+  <div class="row" style="margin-top:12px;">
+    <div><label>Observação Geral</label><textarea id="generalObs" rows="2"></textarea></div>
+  </div>
+
+  <div class="signature-area">
+    <label>Assinatura Responsável pelas Ferramentas:</label>
+    <canvas id="sig_resp" class="signature-box"></canvas>
+  </div>
+  <div class="signature-area">
+    <label>Assinatura SMS:</label>
+    <canvas id="sig_sms" class="signature-box"></canvas>
+  </div>
+  <div class="signature-area">
+    <label>Equipe Auditoria:</label>
+    <canvas id="sig_supervisor" class="signature-box"></canvas>
+  </div>
+
+  <footer>
+    <button class="btn primary" id="reportBtn">Gerar PDF</button>
+  </footer>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const { jsPDF } = window.jspdf;
+
+// Itens por depósito
+const itemsByDeposit = {
+  "Depósito 6":["Kit Cinta Arqueamento"],
+  "Depósito 9":["Trena","Escova de Aço","Martelo","Estilete","Tesoura","Kit Cinta Arqueamento"],
+  "Depósito 13":["Tesoura de Corte","Chave Combinada","Trena","Alicate Universal","Chave de Fenda","Martelo","Estilete","Pé-de-Cabra Torcido","Marreta","Ferramento","Hands Off"],
+  "Depósito 24":["Trena","Pé de Cabra Torcido","Tesoura de Corte","Alicate Corta Cabo","Martelo","Escova de Aço","Chave de Fenda","Kit Cinta Arqueamento"],
+  "Depósito 25":["Chave de Fenda","Alicate Universal","Martelo","Estilete","Pé de Cabra Torcido","Trena","Kit Cinta Arqueamento","Grampeador"],
+  "Carpintaria":["Chave de Fenda","Alicate Universal","Martelo","Estilete","Trena","Torque Armador 12","Esquadro 10 para Carpinteiro","Lápis Carpinteiro","Formão para Madeira","Kit de Chave Combinada","Serra Tico e Teco","Jogo de Brocas e Soquetes","Parafusadeira Elétrica","Lâmina de Serra Tico-Teco"]
+};
+
+// Preenche depósitos
+const depositSelect=document.getElementById('deposit');
+Object.keys(itemsByDeposit).forEach(dep=>{
+  const opt=document.createElement('option'); opt.value=dep; opt.textContent=dep; depositSelect.appendChild(opt);
+});
+
+// Criar itens e fotos
+const itemsContainer=document.getElementById('itemsContainer');
+const emptyNote=document.getElementById('emptyNote');
+let photosData = {}; // { "Depósito 6": {0: [img1, img2], ...}, ... }
+
+depositSelect.addEventListener('change',()=>{
+  const list = itemsByDeposit[depositSelect.value]||[];
+  itemsContainer.innerHTML="";
+  photosData[depositSelect.value] = {};
+  if(list.length===0){ emptyNote.style.display='block'; return; }
+  emptyNote.style.display='none';
+  list.forEach((item,i)=>{
+    const div=document.createElement('div'); div.className='item';
+    div.innerHTML=`
+      <h3>${i+1}. ${item}</h3>
+      <label><input type="radio" name="chk_${i}" value="Aprovada"> Aprovada</label>
+      <label><input type="radio" name="chk_${i}" value="Reprovada"> Reprovada</label>
+      <input type="text" placeholder="Observação">
+      <div class="photos" id="photos_${i}">
+        <label class="btn ghost" style="padding:4px 8px;font-size:12px;">📷 1
+          <input type="file" accept="image/*" style="display:none" onchange="previewPhoto(event,'${depositSelect.value}',${i},0)">
+        </label>
+        <label class="btn ghost" style="padding:4px 8px;font-size:12px;">📷 2
+          <input type="file" accept="image/*" style="display:none" onchange="previewPhoto(event,'${depositSelect.value}',${i},1)">
+        </label>
+      </div>`;
+    itemsContainer.appendChild(div);
+    photosData[depositSelect.value][i] = [];
+  });
+});
+
+window.previewPhoto = function(e, deposito, index, photoIndex){
+  const cont = document.getElementById(`photos_${index}`);
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    photosData[deposito][index][photoIndex] = ev.target.result;
+    const img = document.createElement('img'); img.src = ev.target.result; cont.appendChild(img);
+  }
+  reader.readAsDataURL(file);
+};
+
+// Assinatura
+function enableDraw(c){
+  const ctx=c.getContext("2d");
+  ctx.strokeStyle="#000"; ctx.lineWidth=2; ctx.lineCap="round";
+  const resize=()=>{const ratio=window.devicePixelRatio||1;const rect=c.getBoundingClientRect();c.width=rect.width*ratio;c.height=rect.height*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);}
+  resize(); window.addEventListener("resize",resize);
+  let drawing=false;
+  function pos(e){const r=c.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};}
+  c.addEventListener("mousedown",e=>{drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
+  c.addEventListener("mousemove",e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
+  c.addEventListener("mouseup",()=>drawing=false); c.addEventListener("mouseleave",()=>drawing=false);
+  c.addEventListener("touchstart",e=>{drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});
+  c.addEventListener("touchmove",e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});
+  c.addEventListener("touchend",()=>drawing=false);
+}
+const canvases=[{id:'sig_resp',label:'Responsável pelas Ferramentas'},{id:'sig_sms',label:'SMS'},{id:'sig_supervisor',label:'Equipe Auditoria'}];
+canvases.forEach(c=>enableDraw(document.getElementById(c.id)));
+
+// Gerar PDF
+document.getElementById("reportBtn").addEventListener("click", async () => {
+  const doc = new jsPDF("p","pt","a4");
+  const width = doc.internal.pageSize.getWidth();
+  const margin = 40;
+  let y = 60;
+  const dataHora = new Date().toLocaleString("pt-BR");
+  const depositos = Object.keys(itemsByDeposit);
+  const obs = document.getElementById("generalObs").value || "—";
+
+  for(let d=0; d<depositos.length; d++){
+    const deposito = depositos[d];
+    // Cabeçalho
+    const boxHeight = 22, gap = 10;
+    const infos = [["Data/Hora", dataHora],["Depósito", deposito]];
+    const totalWidth = width - margin*2 - gap*(infos.length-1);
+    const boxWidth = totalWidth/infos.length;
+    infos.forEach((info,i)=>{
+      const x=margin + i*(boxWidth+gap);
+      doc.setFillColor(46,184,114); doc.roundedRect(x, y-16, boxWidth, boxHeight,5,5,"F");
+      doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(10);
+      const text=`${info[0]}: ${info[1]}`;
+      const textX = x + (boxWidth-doc.getTextWidth(text))/2;
+      doc.text(text,textX,y);
+      doc.setTextColor(0,0,0);
+    });
+    y += boxHeight + 20;
+    doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.text("Observação Geral:",margin,y); y+=15;
+    doc.setFont("helvetica","normal"); const lines=doc.splitTextToSize(obs,width-margin*2); doc.text(lines,margin,y); y+=lines.length*12+20;
+
+    // Itens
+    const itens = itemsByDeposit[deposito];
+    for(let i=0;i<itens.length;i++){
+      const nome = itens[i];
+
+      if(y>700){doc.addPage(); y=60;}
+      const boxHeightItem=22, textWidthItem = doc.getTextWidth(nome)+20;
+      const boxWidthItem = Math.min(textWidthItem,width-margin*2);
+      doc.setFillColor(46,184,114); doc.roundedRect(margin-2,y-14,boxWidthItem,boxHeightItem,5,5,"F");
+      doc.setTextColor(255,255,255); doc.text(nome,margin+5,y+2); doc.setTextColor(0,0,0); y+=20;
+      doc.text(`Status: —`,margin,y); y+=12; doc.text(`Observação: —`,margin,y); y+=10;
+      // Fotos
+      const fotos = (photosData[deposito] && photosData[deposito][i]) || [];
+      let x=margin; const fotoTam=250; let linhaFotoTam=0;
+      for(let p=0;p<fotos.length;p++){
+        if(fotos[p]){
+          const img=await new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.src=fotos[p];});
+          if(x + fotoTam > width - margin){ x=margin; y+=linhaFotoTam+10; linhaFotoTam=0; }
+          doc.addImage(img,"PNG",x,y,fotoTam,fotoTam);
+          linhaFotoTam = fotoTam;
+          x += fotoTam + 10;
+        }
+      }
+      if(fotos.length>0) y+=linhaFotoTam+20;
+    }
+    if(d<depositos.length-1){doc.addPage(); y=60;}
+  }
+
+  // Assinaturas
+  doc.addPage(); y=60; doc.setFont("helvetica","bold"); doc.setFontSize(14);
+  doc.text("Assinaturas",width/2,y,{align:"center"}); y+=30;
+  const sigW=200,sigH=80;
+  for(const cObj of canvases){
+    const canvas=document.getElementById(cObj.id);
+    const dataURL=canvas.toDataURL("image/png",1.0);
+    doc.setFont("helvetica","normal"); doc.text(cObj.label+":",margin,y);
+    doc.addImage(dataURL,"PNG",margin+120,y-15,sigW,sigH);
+    y+=sigH+40;
+  }
+
+  doc.save(`Checklist_todos_depositos_${dataHora.replace(/[\/\s:]/g,"_")}.pdf`);
+});
+</script>
+</body>
+</html>
