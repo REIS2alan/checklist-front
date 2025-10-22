@@ -103,7 +103,7 @@ textarea {
 }
 
 .item h3 {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   font-size: 15px;
   color: var(--text);
 }
@@ -195,7 +195,6 @@ footer {
 <header>
   <h1>Checklist de Inspeção de Ferramentas</h1>
 </header>
-
 <div class="card">
   <div class="row">
     <div><label>Depósito</label>
@@ -233,6 +232,36 @@ footer {
 <script>
 const { jsPDF } = window.jspdf;
 
+// Textos explicativos aprimorados
+const itemDescriptions = {
+  "Tesoura": "Verificar se as lâminas estão afiadas, alinhadas, limpas e livres de ferrugem. Checar se o cabo está firme e confortável ao uso.",
+  "Tesoura de Corte": "Inspecionar o alinhamento e a afiação das lâminas, ausência de oxidação, firmeza do cabo e funcionamento suave ao abrir e fechar.",
+  "Trena": "Inspecionar a fixação da cabeça, ausência de folgas, rachaduras ou oxidação. Checar se o cabo está íntegro e bem fixado.",
+  "Escova de Aço": "Checar se as cerdas estão firmes, sem desgaste excessivo ou deformações, e se o cabo está em bom estado e firme.",
+  "Martelo": "Inspecionar a fixação da cabeça, ausência de folgas, rachaduras ou oxidação. Checar se o cabo está íntegro e bem fixado.",
+  "Estilete": "Verificar se a lâmina está afiada e firme no suporte, funcionamento da trava, e se o corpo do estilete não possui trincas.",
+  "Kit Cinta Arqueamento": "Conferir se todas as peças do kit estão presentes, limpas e funcionais, com mecanismo de arqueamento operando corretamente.",
+  "Chave Combinada": "Inspecionar se não há desgaste nas bocas, deformações ou oxidação. Verificar se a ferramenta está limpa e em bom estado.",
+  "Alicate Universal": "Verificar o alinhamento das mandíbulas, movimento suave sem folgas, e integridade dos cabos isolantes.",
+  "Chave de Fenda": "Checar se a ponta está íntegra, sem desgaste ou deformação, e se o cabo está firme e sem rachaduras.",
+  "Pé-de-Cabra Torcido": "Inspecionar se não há trincas, empenamentos ou deformações. Verificar se a superfície está limpa e sem corrosão.",
+  "Marreta": "Verificar se a cabeça está firme e sem folgas, cabo íntegro e sem rachaduras, e ausência de oxidação nas partes metálicas.",
+  "Ferramento": "Avaliar o estado geral da ferramenta, funcionamento adequado, limpeza e ausência de danos estruturais.",
+  "Hands Off": "Checar se o equipamento está limpo, sem rachaduras ou deformações, e se os mecanismos estão operando corretamente.",
+  "Alicate Corta Cabo": "Verificar o corte eficiente sem deformar o cabo, alinhamento das lâminas e integridade do isolamento.",
+  "Grampeador": "Testar o funcionamento suave, verificar se não emperra e se realiza grampeamento completo e firme.",
+  "Torque Armador 12": "Conferir a calibração do torque, ausência de folgas, funcionamento preciso e integridade estrutural.",
+  "Esquadro 10 para Carpinteiro": "Verificar se mantém ângulos precisos de 90°, sem empeno, rachaduras ou sujeira excessiva.",
+  "Lápis Carpinteiro": "Checar se escreve corretamente, ponta afiada e corpo sem quebras ou rachaduras.",
+  "Formão para Madeira": "Verificar se a lâmina está afiada, limpa e bem fixada ao cabo, sem oxidação ou folgas.",
+  "Kit de Chave Combinada": "Confirmar se o conjunto está completo, limpo, sem deformações e armazenado adequadamente.",
+  "Serra Tico e Teco": "Inspecionar se a lâmina está firme, afiada e sem desgaste, e se o motor e acionamento funcionam corretamente.",
+  "Jogo de Brocas e Soquetes": "Verificar se o kit está completo, organizado, sem desgaste nas pontas e com encaixes firmes.",
+  "Parafusadeira Elétrica": "Testar o funcionamento, rotação e torque, conferir integridade da carcaça e nível de carga da bateria.",
+  "Lâmina de Serra Tico-Teco": "Verificar se está afiada, limpa, sem empenamento ou trincas e pronta para uso seguro."
+};
+
+
 // Itens por depósito
 const itemsByDeposit = {
   "Depósito 6":["Kit Cinta Arqueamento"],
@@ -252,33 +281,53 @@ Object.keys(itemsByDeposit).forEach(dep=>{
 // Criar itens e fotos
 const itemsContainer=document.getElementById('itemsContainer');
 const emptyNote=document.getElementById('emptyNote');
-let photosData = {}; // { "Depósito 6": {0: [img1, img2], ...}, ... }
+let photosData = {};
 
-depositSelect.addEventListener('change',()=>{
-  const list = itemsByDeposit[depositSelect.value]||[];
-  itemsContainer.innerHTML="";
-  photosData[depositSelect.value] = {};
-  if(list.length===0){ emptyNote.style.display='block'; return; }
-  emptyNote.style.display='none';
-  list.forEach((item,i)=>{
-    const div=document.createElement('div'); div.className='item';
-    div.innerHTML=`
-      <h3>${i+1}. ${item}</h3>
+depositSelect.addEventListener("change", () => {
+  const deposit = depositSelect.value;
+  const itemsContainer = document.getElementById("itemsContainer");
+  itemsContainer.innerHTML = "";
+
+  if (!deposit || !itemsByDeposit[deposit]) return;
+
+  const list = itemsByDeposit[deposit];
+  photosData[deposit] = [];
+
+  list.forEach((item, i) => {
+    const div = document.createElement("div");
+    div.className = "item";
+    const descricao = itemDescriptions[item] || "";
+
+    div.innerHTML = `
+      <h3>${i + 1}. ${item}</h3>
+      <div style="font-size:13px; color:#bbb; margin-bottom:8px; text-align:left;">
+        ${descricao}
+      </div>
       <label><input type="radio" name="chk_${i}" value="Aprovada"> Aprovada</label>
       <label><input type="radio" name="chk_${i}" value="Reprovada"> Reprovada</label>
       <input type="text" placeholder="Observação">
-      <div class="photos" id="photos_${i}">
-        <label class="btn ghost" style="padding:4px 8px;font-size:12px;">📷 1
-          <input type="file" accept="image/*" style="display:none" onchange="previewPhoto(event,'${depositSelect.value}',${i},0)">
-        </label>
-        <label class="btn ghost" style="padding:4px 8px;font-size:12px;">📷 2
-          <input type="file" accept="image/*" style="display:none" onchange="previewPhoto(event,'${depositSelect.value}',${i},1)">
-        </label>
-      </div>`;
+     <div class="photos" id="photos_${i}">
+  <!-- Botão 1: Câmera -->
+  <label class="btn ghost" style="padding:4px 8px;font-size:12px;">📷 Abrir Câmera
+    <input type="file" accept="image/*" capture="environment" style="display:none"
+           onchange="previewPhoto(event,'${deposit}',${i},0)">
+  </label>
+
+  <!-- Botão 2: Galeria -->
+  <label class="btn ghost" style="padding:4px 8px;font-size:12px;">🖼️ Selecionar da Galeria
+    <input type="file" accept="image/*" style="display:none"
+           onchange="previewPhoto(event,'${deposit}',${i},0)">
+  </label>
+</div>
+
+    `;
+
     itemsContainer.appendChild(div);
-    photosData[depositSelect.value][i] = [];
+    photosData[deposit][i] = [];
   });
 });
+
+
 
 window.previewPhoto = function(e, deposito, index, photoIndex){
   const cont = document.getElementById(`photos_${index}`);
@@ -343,19 +392,60 @@ document.getElementById("reportBtn").addEventListener("click", async () => {
     const itens = itemsByDeposit[deposito];
     for(let i=0;i<itens.length;i++){
       const nome = itens[i];
+      const desc = itemDescriptions[nome] || "—";
 
       if(y>700){doc.addPage(); y=60;}
       const boxHeightItem=22, textWidthItem = doc.getTextWidth(nome)+20;
       const boxWidthItem = Math.min(textWidthItem,width-margin*2);
       doc.setFillColor(46,184,114); doc.roundedRect(margin-2,y-14,boxWidthItem,boxHeightItem,5,5,"F");
       doc.setTextColor(255,255,255); doc.text(nome,margin+5,y+2); doc.setTextColor(0,0,0); y+=20;
-      doc.text(`Status: —`,margin,y); y+=12; doc.text(`Observação: —`,margin,y); y+=10;
+
+      // ==================== INÍCIO DA ALTERAÇÃO ====================
+doc.setTextColor(0, 0, 0);
+doc.setFontSize(10);
+
+// Divide o texto em frases separadas por ponto ou quebra de linha
+const descLines = desc.split(/\.\s*|\n/).map(l => l.trim()).filter(l => l);
+
+descLines.forEach(line => {
+  if(line) {
+    // Adiciona marcador e indentação (margin + 10)
+    doc.text(`• ${line}${line.endsWith('.') ? '' : '.'}`, margin + 10, y);
+    y += 14; // espaçamento entre linhas
+  }
+});
+
+y += 6; // espaço extra após a descrição
+// ==================== FIM DA ALTERAÇÃO ====================
+
+
+
+
+     // Pega os valores selecionados e observações
+const radios = document.getElementsByName(`chk_${i}`);
+let status = "—";
+radios.forEach(r => { if (r.checked) status = r.value; });
+
+const obsInput = itemsContainer.querySelectorAll("input[type=text]")[i];
+const observacao = obsInput ? obsInput.value || "—" : "—";
+
+// Adiciona ao PDF
+doc.text(`Status: ${status}`, margin, y);
+y += 12;
+doc.text(`Observação: ${observacao}`, margin, y);
+y += 10;
+
+
       // Fotos
       const fotos = (photosData[deposito] && photosData[deposito][i]) || [];
       let x=margin; const fotoTam=250; let linhaFotoTam=0;
       for(let p=0;p<fotos.length;p++){
         if(fotos[p]){
-          const img=await new Promise(res=>{const im=new Image();im.onload=()=>res(im);im.src=fotos[p];});
+          const img=await new Promise(res=>{
+            const im=new Image();
+            im.onload=()=>res(im);
+            im.src=fotos[p];
+          });
           if(x + fotoTam > width - margin){ x=margin; y+=linhaFotoTam+10; linhaFotoTam=0; }
           doc.addImage(img,"PNG",x,y,fotoTam,fotoTam);
           linhaFotoTam = fotoTam;
