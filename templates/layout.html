@@ -316,16 +316,9 @@ document.getElementById("reportBtn").addEventListener("click", async () => {
   const margin = 40;
   let y = 60;
   const dataHora = new Date().toLocaleString("pt-BR");
-  const depositos = Object.keys(itemsByDeposit);
-  const obs = document.getElementById("generalObs").value || "—";
+  const depositos = Object.keys(itemsByDeposit);const depositos = Object.keys(itemsByDeposit);
 
-  for(let d=0; d<depositos.length; d++){
-    const deposito = depositos[d];
-    // Cabeçalho
-    const boxHeight = 22, gap = 10;
-    const infos = [["Data/Hora", dataHora],["Depósito", deposito]];
-    const totalWidth = width - margin*2 - gap*(infos.length-1);
-    const boxWidth = totalWidth/infos.length;
+totalWidth/infos.length;
     infos.forEach((info,i)=>{
       const x=margin + i*(boxWidth+gap);
       doc.setFillColor(46,184,114); doc.roundedRect(x, y-16, boxWidth, boxHeight,5,5,"F");
@@ -338,6 +331,8 @@ document.getElementById("reportBtn").addEventListener("click", async () => {
     y += boxHeight + 20;
     doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.text("Observação Geral:",margin,y); y+=15;
     doc.setFont("helvetica","normal"); const lines=doc.splitTextToSize(obs,width-margin*2); doc.text(lines,margin,y); y+=lines.length*12+20;
+
+
 
     // Itens
     const itens = itemsByDeposit[deposito];

@@ -164,22 +164,7 @@ footer {
   margin-top: 20px;
 }
 
-.signature-area {
-  margin-top: 20px;
-  background: #1a1d21;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px;
-}
 
-.signature-box {
-  width: 30%;
-  height: 80px;
-  border: 2px dashed #555;
-  border-radius: 2px;
-  background: #fff;
-  touch-action: none;
-}
 
 @media (max-width: 600px) {
   .btn {
@@ -209,18 +194,6 @@ footer {
     <div><label>Observação Geral</label><textarea id="generalObs" rows="2"></textarea></div>
   </div>
 
-  <div class="signature-area">
-    <label>Assinatura Responsável pelas Ferramentas:</label>
-    <canvas id="sig_resp" class="signature-box"></canvas>
-  </div>
-  <div class="signature-area">
-    <label>Assinatura SMS:</label>
-    <canvas id="sig_sms" class="signature-box"></canvas>
-  </div>
-  <div class="signature-area">
-    <label>Equipe Auditoria:</label>
-    <canvas id="sig_supervisor" class="signature-box"></canvas>
-  </div>
 
   <footer>
     <button class="btn primary" id="reportBtn">Gerar PDF</button>
@@ -229,8 +202,12 @@ footer {
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
 <script>
 const { jsPDF } = window.jspdf;
+
+
 
 // Textos explicativos aprimorados
 const itemDescriptions = {
@@ -258,19 +235,47 @@ const itemDescriptions = {
   "Serra Tico e Teco": "Inspecionar se a lâmina está firme, afiada e sem desgaste, e se o motor e acionamento funcionam corretamente.",
   "Jogo de Brocas e Soquetes": "Verificar se o kit está completo, organizado, sem desgaste nas pontas e com encaixes firmes.",
   "Parafusadeira Elétrica": "Testar o funcionamento, rotação e torque, conferir integridade da carcaça e nível de carga da bateria.",
-  "Lâmina de Serra Tico-Teco": "Verificar se está afiada, limpa, sem empenamento ou trincas e pronta para uso seguro."
+  "Lâmina de Serra Tico-Teco": "Verificar se está afiada, limpa, sem empenamento ou trincas e pronta para uso seguro.",
+  "Pé de Cabra": "Verificar Sem trincas ou rachaduras, sem deformações, sem desgaste excerssivo.",
+  "Chave inglesa": "Sem rachaduras ou trincas, Sem desgaste excessivo.",
+  "Chave de Boca": "Sem desgaste ou arredondamento, Sem trincas ou fissuras, Sem fissuras ou deformações.",
+  "Chave de Corrente Para Tubos": "Sem elos quebrados ou trincados,Sem desgaste excessivo, Tensão correta.",
+
 };
 
 
 // Itens por depósito
 const itemsByDeposit = {
-  "Depósito 6":["Kit Cinta Arqueamento"],
-  "Depósito 9":["Trena","Escova de Aço","Martelo","Estilete","Tesoura","Kit Cinta Arqueamento"],
-  "Depósito 13":["Tesoura de Corte","Chave Combinada","Trena","Alicate Universal","Chave de Fenda","Martelo","Estilete","Pé-de-Cabra Torcido","Marreta","Ferramento","Hands Off"],
-  "Depósito 24":["Trena","Pé de Cabra Torcido","Tesoura de Corte","Alicate Corta Cabo","Martelo","Escova de Aço","Chave de Fenda","Kit Cinta Arqueamento"],
-  "Depósito 25":["Chave de Fenda","Alicate Universal","Martelo","Estilete","Pé de Cabra Torcido","Trena","Kit Cinta Arqueamento","Grampeador"],
-  "Carpintaria":["Chave de Fenda","Alicate Universal","Martelo","Estilete","Trena","Torque Armador 12","Esquadro 10 para Carpinteiro","Lápis Carpinteiro","Formão para Madeira","Kit de Chave Combinada","Serra Tico e Teco","Jogo de Brocas e Soquetes","Parafusadeira Elétrica","Lâmina de Serra Tico-Teco"]
+  "Carpintaria": [
+    "Chave de Fenda","Alicate Universal","Martelo","Estilete","Trena",
+    "Torque Armador 12","Esquadro 10 para Carpinteiro","Lápis Carpinteiro",
+    "Formão para Madeira","Kit de Chave Combinada","Serra Tico e Teco",
+    "Jogo de Brocas e Soquetes","Parafusadeira Elétrica","Lâmina de Serra Tico-Teco"
+  ],
+  "Depósito 9": [
+    "Trena","Escova de Aço","Martelo","Estilete","Tesoura","Kit Cinta Arqueamento"
+  ],
+  "Depósito 13": [
+    "Tesoura de Corte","Chave Combinada","Trena","Alicate Universal",
+    "Chave de Fenda","Martelo","Estilete","Pé-de-Cabra Torcido","Marreta",
+    "Ferramento","Hands Off"
+  ],
+  "Depósito 24": [
+    "Trena","Pé de Cabra Torcido","Tesoura de Corte","Alicate Corta Cabo",
+    "Martelo","Escova de Aço","Chave de Fenda","Kit Cinta Arqueamento"
+  ],
+  "Depósito 25": [
+    "Chave de Fenda","Alicate Universal","Martelo","Estilete",
+    "Pé de Cabra Torcido","Trena","Kit Cinta Arqueamento","Grampeador",
+    "Pé de Cabra","Chave inglesa","Alicate de Corte","Chave de Boca", "Chave de Corrente Para Tubos",
+
+
+  ]
 };
+
+// Ordem personalizada para aparecer no PDF
+const depositOrder = ["Carpintaria", "Depósito 9", "Depósito 13", "Depósito 24", "Depósito 25"];
+
 
 // Preenche depósitos
 const depositSelect=document.getElementById('deposit');
@@ -340,23 +345,7 @@ window.previewPhoto = function(e, deposito, index, photoIndex){
   reader.readAsDataURL(file);
 };
 
-// Assinatura
-function enableDraw(c){
-  const ctx=c.getContext("2d");
-  ctx.strokeStyle="#000"; ctx.lineWidth=2; ctx.lineCap="round";
-  const resize=()=>{const ratio=window.devicePixelRatio||1;const rect=c.getBoundingClientRect();c.width=rect.width*ratio;c.height=rect.height*ratio;ctx.setTransform(ratio,0,0,ratio,0,0);}
-  resize(); window.addEventListener("resize",resize);
-  let drawing=false;
-  function pos(e){const r=c.getBoundingClientRect();const t=e.touches?e.touches[0]:e;return{x:t.clientX-r.left,y:t.clientY-r.top};}
-  c.addEventListener("mousedown",e=>{drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);});
-  c.addEventListener("mousemove",e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();});
-  c.addEventListener("mouseup",()=>drawing=false); c.addEventListener("mouseleave",()=>drawing=false);
-  c.addEventListener("touchstart",e=>{drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);},{passive:false});
-  c.addEventListener("touchmove",e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();},{passive:false});
-  c.addEventListener("touchend",()=>drawing=false);
-}
-const canvases=[{id:'sig_resp',label:'Responsável pelas Ferramentas'},{id:'sig_sms',label:'SMS'},{id:'sig_supervisor',label:'Equipe Auditoria'}];
-canvases.forEach(c=>enableDraw(document.getElementById(c.id)));
+
 
 // Gerar PDF
 document.getElementById("reportBtn").addEventListener("click", async () => {
@@ -364,29 +353,445 @@ document.getElementById("reportBtn").addEventListener("click", async () => {
   const width = doc.internal.pageSize.getWidth();
   const margin = 40;
   let y = 60;
+
+
+
+    // === PRIMEIRA PÁGINA: SUMÁRIO ===
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("RELATÓRIO DE INSPEÇÃO DE FERRAMENTAS DO SOP/ARM", width / 2, y, { align: "center" });
+  y += 30;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(13);
+  doc.text("SUMÁRIO", width / 2, y, { align: "center" });
+  y += 30;
+
+  const sumario = [
+    "1. Cronograma de Inspeções.................................................................2",
+    "2. Relação de ferramentas do SOP/ARM.......................................................3",
+    "3. Inspeção Carpintaria....................................................................3",
+    "4. Relação de Ferramentas Inaptas..........................................................6",
+    "5. Inspeção Depósito/D-09..................................................................6",
+    "6. Relação de Ferramentas Inaptas..........................................................7",
+    "7. Inspeção Depósito/D-13..................................................................8",
+    "8. Relação de Ferramentas Inaptas.........................................................10",
+    "9. Inspeção Depósito/D-24.................................................................10",
+    "10. Relação de Ferramentas Inaptas........................................................12",
+    "11. Inspeção Depósito/D-25................................................................12",
+    "12. Relação de Ferramentas Inaptas........................................................15",
+    "13. Assinatura dos Participantes da Inspeção..............................................14",
+  ];
+
+  doc.setFontSize(11);
+  // === SUMÁRIO ALINHADO COM PONTOS ===
+doc.setFont("helvetica", "normal");
+doc.setFontSize(11);
+
+const marginLeft = margin;
+const pageCol = width - margin; // posição máxima da página
+
+sumario.forEach(linha => {
+  // Divide título e número da página
+  const lastDot = linha.lastIndexOf(".");
+  const pagina = linha.slice(lastDot + 1).trim(); // número da página
+  const titulo = linha.slice(0, lastDot).trim(); // título sem os pontos
+
+  // Largura do texto
+  const larguraTitulo = doc.getTextWidth(titulo + " ");
+  const larguraPagina = doc.getTextWidth(pagina);
+
+  // Calcula quantos pontos cabem
+  const pontosDisponiveis = pageCol - marginLeft - larguraTitulo - larguraPagina - 5;
+  const nPontos = Math.floor(pontosDisponiveis / doc.getTextWidth("."));
+  const pontos = ".".repeat(nPontos);
+
+  // Escreve no PDF
+  doc.text(`${titulo} ${pontos}${pagina}`, marginLeft, y);
+  y += 18;
+});
+
+
+  // === ADICIONA NOVA PÁGINA PARA O RESTANTE ===
+  // ---------------------
+// Segunda página: Cronograma
+// ---------------------
+doc.addPage(); // força nova página
+y = 60;
+
+doc.setFontSize(12);
+  // === SEGUNDA PÁGINA: CRONOGRAMA E RELAÇÃO DE FERRAMENTAS ===
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("1. Cronograma de Inspeções", margin, y);
+  y += 20;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  const cronogramaTexto =
+    "1.1 – O cronograma foi estabelecido considerando o período de 12 meses. " +
+    "O uso desta ferramenta ajuda a evitar atrasos nas inspeções e a garantir que a atividade seja entregue no prazo estipulado.";
+  const linhas = doc.splitTextToSize(cronogramaTexto, width - margin * 2);
+  doc.text(linhas, margin, y);
+  y += 40;
+
+  // === Tabela do Cronograma ===
+  doc.setFont("helvetica", "bold");
+  doc.text("Tabela 1 – Cronograma de Inspeção", margin, y);
+  y += 20;
+
+  doc.setFont("helvetica", "normal");
+  const headers = ["Data da Inspeção", "Mês", "Status"];
+  const rows = [
+    ["27/01/2024", "Janeiro", "Concluída"],
+    ["26/02/2024", "Fevereiro", "Concluída"],
+    ["27/03/2024", "Março", "Concluída"],
+    ["26/04/2024", "Abril", "Concluída"],
+    ["27/05/2024", "Maio", "Concluída"],
+    ["26/06/2024", "Junho", "Concluída"],
+    ["26/07/2024", "Julho", "Concluída"],
+    ["26/08/2024", "Agosto", "Concluída"],
+    ["25/09/2024", "Setembro", "Concluída"],
+    ["25/10/2024", "Outubro", "Concluída"],
+    ["25/11/2024", "Novembro", ""],
+    ["27/12/2024", "Dezembro", ""],
+  ];
+
+  doc.autoTable({
+  startY: y,
+  head: [headers],
+  body: rows,
+  theme: "grid",
+  headStyles: { fillColor: [46, 184, 114], textColor: 255 },
+  styles: { fontSize: 10, cellPadding: 4 },
+  margin: { left: margin, right: margin },
+  didDrawCell: function(data) {
+    // Desenhar quadrado do tamanho da célula na coluna "Data da Inspeção"
+    if(data.column.index === 0 && data.section === 'body') {
+      const month = data.row.raw[1].trim(); // pega o mês da linha
+      const colors = {
+        "Janeiro": [46, 184, 114],
+        "Fevereiro": [0, 128, 0],
+        "Março": [0, 0, 255],
+        "Abril": [128, 0, 128],
+        "Maio": [165, 42, 42],
+        "Junho": [0, 0, 139],
+        "Julho": [144, 238, 144],
+        "Agosto": [255, 165, 0],
+        "Setembro": [169, 169, 169],
+        "Outubro": [216, 191, 216],
+        "Novembro": [173, 216, 230],
+        "Dezembro": [255, 215, 0]
+      };
+      if(colors[month]){
+        const x = data.cell.x;
+        const y = data.cell.y;
+        const w = data.cell.width;
+        const h = data.cell.height;
+        doc.setFillColor(...colors[month]);
+        doc.rect(x, y, w, h, 'F'); // retângulo do tamanho da célula
+      }
+    }
+  }
+});
+
+
+  y = doc.lastAutoTable.finalY + 30;
+
+  // === Seção 2 ===
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("2. Relação de Ferramentas do SOP/ARM", margin, y);
+  y += 20;
+
+  doc.setFont("helvetica", "normal");
+  const relacaoTexto =
+    "2.1 – As ferramentas utilizadas pela equipe do SOP/ARM buscam garantir a melhoria " +
+    "na qualidade do trabalho e, principalmente, a segurança das pessoas que as utilizam. " +
+    "Até o momento da elaboração deste relatório o SOP/ARM dispõe de 21 modelos de ferramentas " +
+    "distribuídas entre os depósitos sob nossa gestão.";
+  const linhas2 = doc.splitTextToSize(relacaoTexto, width - margin * 2);
+  doc.text(linhas2, margin, y);
+  y += 40;
+
+// === TERCEIRA PÁGINA: Relação de Ferramentas x Quantidade + Inspeção Carpintaria ===
+doc.addPage();
+y = 60;
+
+// Título da tabela
+doc.setFont("helvetica","bold");
+doc.setFontSize(14);
+doc.text("2. Tabela 2 – Relação de Ferramentas x Quantidade", margin, y);
+y += 25;
+
+// Dados da tabela
+const ferramentasData = [
+  ["Alicate Universal", 8],
+  ["Chave de Fenda", 28],
+  ["Martelo", 8],
+  ["Estilete", 8],
+  ["Trena", 8],
+  ["Torque Armador 12", 2],
+  ["Esquadro", 2],
+  ["Lápis p/ Carpinteiro", 2],
+  ["Formão p/ Madeira", 2],
+  ["Serra Tico-Tico", 1],
+  ["Kit de chave combinada", 1],
+  ["Jogo de Brocas", 1],
+  ["Parafusadeira", 1],
+  ["Lâmina de Serra Tico-Tico", 1],
+  ["Tesoura de Corte", 4],
+  ["Chave Combinada", 4],
+  ["Arco de Serra", 1],
+  ["Escova de Aço", 3],
+  ["Alicate Corta Cabo", 2],
+  ["Pé de Cabra Torcido", 4],
+  ["Marreta", 1]
+];
+
+doc.autoTable({
+  startY: y,
+  head: [["Ferramentas", "Quantidade"]],
+  body: ferramentasData,
+  theme: "grid",
+  headStyles: { fillColor: [46, 184, 114], textColor: 255 },
+  styles: { fontSize: 10, cellPadding: 4 },
+  margin: { left: margin, right: margin }
+});
+
+y = doc.lastAutoTable.finalY + 30;
+
+// Texto explicativo da Carpintaria
+doc.setFont("helvetica","bold");
+doc.setFontSize(14);
+doc.text("3. Inspeção das Ferramentas da Carpintaria", margin, y);
+y += 20;
+
+doc.setFont("helvetica","normal");
+doc.setFontSize(11);
+const textoCarpintaria =
+  "3.1 – A carpintaria do SOP/ARM é uma área destinada a execução de serviços de confecção de embalagens " +
+  "para transporte de materiais, construção e/ou reparo em pallets, dentre outros serviços que tenham a madeira como matéria-prima.";
+
+const linhasCarpintaria = doc.splitTextToSize(textoCarpintaria, width - margin*2);
+doc.text(linhasCarpintaria, margin, y);
+y += linhasCarpintaria.length * 12 + 20;
+
+// === Continuação da Carpintaria ===
+doc.setFont("helvetica","normal");
+doc.setFontSize(11);
+
+const texto32 =
+"3.2 – Nesta área, as atividades citadas no item 3.1 deste relatório de inspeção são realizadas por 02 colaboradores. " +
+"Os profissionais estão aptos a manusear as ferramentas utilizadas na execução dos serviços e responsáveis pela limpeza, conservação e verificação diária da condição das ferramentas.";
+doc.text(doc.splitTextToSize(texto32, width - margin * 2), margin, y);
+y += 60;
+
+const texto33 =
+"3.3 – Atualmente a carpintaria possui 31 ferramentas, tais como: Parafusadeira, Jogo de brocas, martelos, alicates, serra, dentre outras.";
+doc.text(doc.splitTextToSize(texto33, width - margin * 2), margin, y);
+y += 40;
+
+// Espaço reservado para Imagem 1
+doc.text("Imagem 1 – Inspeção das ferramentas utilizadas na carpintaria.", margin, y);
+y += 180;
+
+// Próximos textos
+const texto34 =
+"3.4 – A inspeção das ferramentas é realizada por equipe multidisciplinar formada por representantes do SOP/ARM e SMS. " +
+"Nela, os usuários das ferramentas foram convidados a participar, objetivando desenvolver ainda mais a percepção de segurança quanto à utilização das ferramentas.";
+doc.text(doc.splitTextToSize(texto34, width - margin * 2), margin, y);
+y += 60;
+
+const texto35 =
+"3.5 – Durante a atividade, a equipe responsável pela inspeção utiliza um checklist em que consta uma série de requisitos " +
+"que precisam ser atendidos para que a ferramenta seja considerada apta para utilização, conforme pode ser evidenciado na imagem 2.";
+doc.text(doc.splitTextToSize(texto35, width - margin * 2), margin, y);
+y += 40;
+
+// Espaço reservado para Imagem 2
+doc.text("Imagem 2 – Lista de verificação de conformidade das ferramentas.", margin, y);
+y += 180;
+
+const texto36 = "3.6 – Relação de Ferramentas Inaptas";
+doc.setFont("helvetica","bold");
+doc.text(texto36, margin, y);
+y += 25;
+
+doc.setFont("helvetica","normal");
+const texto37 =
+"3.7 – Durante a inspeção das ferramentas ocorridas no depósito da Carpintaria, foi constatado que todas as ferramentas estão aptas para o serviço.";
+doc.text(doc.splitTextToSize(texto37, width - margin * 2), margin, y);
+y += 50;
+
+
+// Adicione a tabela aqui...
+
   const dataHora = new Date().toLocaleString("pt-BR");
   const depositos = Object.keys(itemsByDeposit);
   const obs = document.getElementById("generalObs").value || "—";
 
-  for(let d=0; d<depositos.length; d++){
-    const deposito = depositos[d];
-    // Cabeçalho
-    const boxHeight = 22, gap = 10;
-    const infos = [["Data/Hora", dataHora],["Depósito", deposito]];
-    const totalWidth = width - margin*2 - gap*(infos.length-1);
-    const boxWidth = totalWidth/infos.length;
-    infos.forEach((info,i)=>{
-      const x=margin + i*(boxWidth+gap);
-      doc.setFillColor(46,184,114); doc.roundedRect(x, y-16, boxWidth, boxHeight,5,5,"F");
-      doc.setTextColor(255,255,255); doc.setFont("helvetica","bold"); doc.setFontSize(10);
-      const text=`${info[0]}: ${info[1]}`;
-      const textX = x + (boxWidth-doc.getTextWidth(text))/2;
-      doc.text(text,textX,y);
-      doc.setTextColor(0,0,0);
-    });
-    y += boxHeight + 20;
-    doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.text("Observação Geral:",margin,y); y+=15;
-    doc.setFont("helvetica","normal"); const lines=doc.splitTextToSize(obs,width-margin*2); doc.text(lines,margin,y); y+=lines.length*12+20;
+  for (let d = 0; d < depositos.length; d++) {
+  const deposito = depositos[d];
+  const itensDoDeposito = itemsByDeposit[deposito] || [];
+  const obsDeposito = document.getElementById("generalObs").value || "";
+
+  // Evita criar página vazia
+  if (itensDoDeposito.length === 0 && obsDeposito.trim() === "") continue;
+
+  // Só adiciona nova página se não for a primeira
+  if (doc.internal.getNumberOfPages() > 1) doc.addPage();
+  y = 60;
+
+
+
+  // Cabeçalho: Data/Hora + Depósito
+  const infos = [["Data/Hora", dataHora],["Depósito", deposito]];
+  const boxHeightInfo = 22;
+  const gapInfo = 10;
+  const totalWidth = width - margin*2 - gapInfo*(infos.length-1);
+  const boxWidth = totalWidth / infos.length;
+
+  infos.forEach((info,i)=>{
+    const x = margin + i*(boxWidth + gapInfo);
+    doc.setFillColor(46,184,114);
+    doc.roundedRect(x, y-16, boxWidth, boxHeightInfo, 5, 5, "F");
+    doc.setTextColor(255,255,255);
+    doc.setFont("helvetica","bold");
+    doc.setFontSize(10);
+    const text = `${info[0]}: ${info[1]}`;
+    const textX = x + (boxWidth - doc.getTextWidth(text)) / 2;
+    doc.text(text, textX, y);
+    doc.setTextColor(0,0,0);
+  });
+
+  y += boxHeightInfo + 20;
+
+  // Observação Geral
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(12);
+  doc.text("Observação Geral:",margin,y);
+  y += 15;
+  doc.setFont("helvetica","normal");
+  const linesObs = doc.splitTextToSize(obs, width - margin*2);
+  doc.text(linesObs, margin, y);
+  y += linesObs.length*12 + 20;
+
+  // Se for o Depósito 9, adiciona texto explicativo
+if (deposito === "Depósito 9") {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("4. Inspeção de Ferramentas Depósito D-09", margin, y);
+  y += 25;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+
+  const texto41 = "4.1 – O AL-09 do SOP/ARM é um depósito destinado a recebimento, expedição e gestão de estoque.";
+  const texto42 = "4.2 – Nesta área, as atividades citadas no item 4.1 deste relatório de inspeção são realizadas por 03 colaboradores. Os profissionais estão aptos a manusear as ferramentas utilizadas na execução dos serviços e responsáveis pela limpeza, conservação e verificação diária da condição das ferramentas.";
+  const texto43 = "4.3 – Atualmente o AL-09 possui 03 ferramentas, tais como: Martelos, tesoura de corte, estilete.";
+  const texto44 = "Imagem 3 – Inspeção das ferramentas utilizadas no AL-09.";
+  const texto45 = "4.4 – A inspeção das ferramentas é realizada por equipe multidisciplinar formada por representantes do SOP/ARM e SMS. Nela, os usuários das ferramentas foram convidados a participar, objetivando desenvolver ainda mais a percepção de segurança quanto à utilização das ferramentas.";
+  const texto46 = "4.5 – Durante a atividade, a equipe responsável pela inspeção utiliza um checklist em que consta uma série de requisitos que precisam ser atendidos para que a ferramenta seja considerada apta para utilização, conforme pode ser evidenciado na imagem 4.";
+
+  const paragrafos = [texto41, texto42, texto43, texto44, texto45, texto46];
+  paragrafos.forEach(p => {
+    const linhas = doc.splitTextToSize(p, width - margin * 2);
+    doc.text(linhas, margin, y);
+    y += linhas.length * 14 + 10;
+  });
+
+  y += 20; // espaçamento antes da lista de ferramentas
+}
+
+
+  // ... aqui continuam os itens normalmente
+   doc.setFont("helvetica","normal"); const lines=doc.splitTextToSize(obs,width-margin*2); doc.text(lines,margin,y); y+=lines.length*12+20;
+
+   // Texto específico do Depósito 13
+if (deposito === "Depósito 13") {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("5. Inspeção de Ferramentas Depósito D-13", margin, y);
+  y += 25;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+
+  const texto51 = "5.1 – O AL-13 do SOP/ARM é uma área destinada à execução de serviços de confecção de embalagens para transporte de materiais, construção e/ou reparo em pallets, dentre outros serviços que tenham a madeira como matéria-prima.";
+  const texto52 = "5.2 – Nesta área, as atividades citadas no item 5.1 deste relatório de inspeção são realizadas por 13 colaboradores. Os profissionais estão aptos a manusear as ferramentas utilizadas na execução dos serviços e responsáveis pela limpeza, conservação e verificação diária da condição das ferramentas.";
+  const texto53 = "5.3 – Atualmente o AL-13 possui 10 ferramentas, tais como: Tesoura de corte, alicates, chave combinada dentre outras.";
+  const texto54 = "Imagem 5 – Inspeção das ferramentas utilizadas no AL-13.";
+  const texto55 = "5.4 – A inspeção das ferramentas é realizada por equipe multidisciplinar formada por representantes do SOP/ARM e SMS. Nela, os usuários das ferramentas foram convidados a participar, objetivando desenvolver ainda mais a percepção de segurança quanto à utilização das ferramentas.";
+
+  const paragrafos13 = [texto51, texto52, texto53, texto54, texto55];
+  paragrafos13.forEach(p => {
+    const linhas = doc.splitTextToSize(p, width - margin * 2);
+    doc.text(linhas, margin, y);
+    y += linhas.length * 14 + 10;
+  });
+
+  y += 20;
+}
+
+// Texto específico do Depósito 24
+if (deposito === "Depósito 24") {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("6. Inspeção de Ferramentas Depósito D-24", margin, y);
+  y += 25;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+
+  const texto61 = "6.1 – O AL-24 do SOP/ARM é uma área destinada a execução de serviços de confecção de embalagens para transporte de materiais, construção e/ou reparo em pallets, dentre outros serviços que tenham a madeira como matéria-prima.";
+  const texto62 = "6.2 – Nesta área, as atividades citadas no item 6.1 deste relatório de inspeção são realizadas por 05 colaboradores. Os profissionais estão aptos a manusear as ferramentas utilizadas na execução dos serviços e responsáveis pela limpeza, conservação e verificação diária da condição das ferramentas.";
+  const texto63 = "6.3 – Atualmente no AL-24 possui 05 ferramentas, tais como: Pé de cabra, corta cabo, alicate, escova de aço dentre outras.";
+  const texto64 = "Imagem 8 – Inspeção das ferramentas utilizadas no AL-24.";
+  const texto65 = "6.4 – A inspeção das ferramentas é realizada por equipe multidisciplinar formada por representantes do SOP/ARM e SMS. Nela, os usuários das ferramentas foram convidados a participar, objetivando desenvolver ainda mais a percepção de segurança quanto a utilização das ferramentas.";
+
+  const paragrafos24 = [texto61, texto62, texto63, texto64, texto65];
+  paragrafos24.forEach(p => {
+    const linhas = doc.splitTextToSize(p, width - margin * 2);
+    doc.text(linhas, margin, y);
+    y += linhas.length * 14 + 10;
+  });
+
+  y += 20; // espaçamento antes da lista de ferramentas
+}
+
+
+
+
+
+// Texto específico do Depósito 25
+if (deposito === "Depósito 25") {
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("8. Inspeção de Ferramentas Depósito D-25", margin, y);
+  y += 25;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+
+  const texto81 = "8.1 – O Depósito 25 do SOP/ARM é uma área destinada para recebimento, conferência física e o processamento da entrada de mercadorias no SAP, para o atendimento as necessidades dos clientes no âmbito da UN-BA.";
+  const texto82 = "8.2 – Nesta área, as atividades citadas no item 8.1 deste relatório de inspeção são realizadas por 6 colaboradores. Os profissionais estão aptos a manusear as ferramentas utilizadas na execução dos serviços e responsáveis pela limpeza, conservação e verificação diária da condição das ferramentas.";
+  const texto83 = "8.3 – Atualmente o depósito AL-25 possui 60 ferramentas, tais como: martelos, estiletes, pé de cabra, dentre outras.";
+  const texto84 = "Imagem 10 – Inspeção das ferramentas utilizadas no AL-25.";
+  const texto85 = "8.4 – A inspeção das ferramentas é realizada por equipe multidisciplinar formada por representantes do SOP/ARM e SMS. Nela, os usuários das ferramentas foram convidados a participar, objetivando desenvolver ainda mais a percepção de segurança quanto a utilização das ferramentas.";
+
+  const paragrafos25 = [texto81, texto82, texto83, texto84, texto85];
+  paragrafos25.forEach(p => {
+    const linhas = doc.splitTextToSize(p, width - margin * 2);
+    doc.text(linhas, margin, y);
+    y += linhas.length * 14 + 10;
+  });
+
+  y += 20; // espaçamento antes da lista de ferramentas
+}
+
+
+
 
     // Itens
     const itens = itemsByDeposit[deposito];
@@ -400,23 +805,31 @@ document.getElementById("reportBtn").addEventListener("click", async () => {
       doc.setFillColor(46,184,114); doc.roundedRect(margin-2,y-14,boxWidthItem,boxHeightItem,5,5,"F");
       doc.setTextColor(255,255,255); doc.text(nome,margin+5,y+2); doc.setTextColor(0,0,0); y+=20;
 
+
+
+
+
       // ==================== INÍCIO DA ALTERAÇÃO ====================
 doc.setTextColor(0, 0, 0);
 doc.setFontSize(10);
 
-// Divide o texto em frases separadas por ponto ou quebra de linha
+
+
+// Divide o texto em frases ou quebras de linha
 const descLines = desc.split(/\.\s*|\n/).map(l => l.trim()).filter(l => l);
 
 descLines.forEach(line => {
   if(line) {
-    // Adiciona marcador e indentação (margin + 10)
-    doc.text(`• ${line}${line.endsWith('.') ? '' : '.'}`, margin + 10, y);
-    y += 14; // espaçamento entre linhas
+    const splitLine = doc.splitTextToSize(`• ${line}${line.endsWith('.') ? '' : '.'}`, width - margin*2 - 10);
+    splitLine.forEach(part => {
+      doc.text(part, margin + 10, y); // indentação
+      y += 14;
+    });
   }
 });
 
-y += 6; // espaço extra após a descrição
-// ==================== FIM DA ALTERAÇÃO ====================
+y += 6; // espaço extra após descrição
+
 
 
 
@@ -438,38 +851,64 @@ y += 10;
 
       // Fotos
       const fotos = (photosData[deposito] && photosData[deposito][i]) || [];
-      let x=margin; const fotoTam=250; let linhaFotoTam=0;
-      for(let p=0;p<fotos.length;p++){
-        if(fotos[p]){
-          const img=await new Promise(res=>{
-            const im=new Image();
-            im.onload=()=>res(im);
-            im.src=fotos[p];
-          });
-          if(x + fotoTam > width - margin){ x=margin; y+=linhaFotoTam+10; linhaFotoTam=0; }
-          doc.addImage(img,"PNG",x,y,fotoTam,fotoTam);
-          linhaFotoTam = fotoTam;
-          x += fotoTam + 10;
-        }
-      }
-      if(fotos.length>0) y+=linhaFotoTam+20;
+let x = margin;
+const fotoTam = 250;
+let linhaFotoTam = 0;
+
+for (let p = 0; p < fotos.length; p++) {
+  if (fotos[p]) {
+    const img = await new Promise(res => {
+      const im = new Image();
+      im.onload = () => res(im);
+      im.src = fotos[p];
+    });
+    if (x + fotoTam > width - margin) {
+      x = margin;
+      y += linhaFotoTam + 10;
+      linhaFotoTam = 0;
     }
-    if(d<depositos.length-1){doc.addPage(); y=60;}
+    doc.addImage(img, "PNG", x, y, fotoTam, fotoTam);
+    linhaFotoTam = fotoTam;
+    x += fotoTam + 10;
+  }
+}
+
+// Sempre adiciona um espaçamento extra, mesmo sem fotos
+y += (linhaFotoTam > 0 ? linhaFotoTam : 20);
+
+    }
+    // Antes de adicionar a última página
+if (y + 200 > doc.internal.pageSize.getHeight()) {
+  doc.addPage();
+  y = 60;
+}
+
   }
 
-  // Assinaturas
-  doc.addPage(); y=60; doc.setFont("helvetica","bold"); doc.setFontSize(14);
-  doc.text("Assinaturas",width/2,y,{align:"center"}); y+=30;
-  const sigW=200,sigH=80;
-  for(const cObj of canvases){
-    const canvas=document.getElementById(cObj.id);
-    const dataURL=canvas.toDataURL("image/png",1.0);
-    doc.setFont("helvetica","normal"); doc.text(cObj.label+":",margin,y);
-    doc.addImage(dataURL,"PNG",margin+120,y-15,sigW,sigH);
-    y+=sigH+40;
-  }
+  // === ÚLTIMA PÁGINA: Representantes e Usuários ===
+doc.addPage();
+y = 60;
+doc.setFont("helvetica","normal");
+doc.setFontSize(12);
+
+const representantes = [
+  "________________________________________________________________                  \n    Representante do SOP/ARM \nUN-BA/SOP/ARM",
+  "________________________________________________________________                  \n    Representante do SOP/ARM \nUN-BA/SOP/ARM",
+  "________________________________________________________________                  \n    Representante do SMS\nUN-BA/SMS",
+  "________________________________________________________________                  \n    Usuário da Ferramenta Inspecionada\nUN-BA/SOP/ARM",
+  "________________________________________________________________                  \n    Usuário da Ferramenta Inspecionada\nUN-BA/SOP/ARM"
+];
+
+representantes.forEach(text => {
+  const lines = doc.splitTextToSize(text, width - 80); // margem de 40 de cada lado
+  doc.text(lines, 40, y);
+  y += lines.length * 18 + 20; // espaçamento entre blocos
+});
+
 
   doc.save(`Checklist_todos_depositos_${dataHora.replace(/[\/\s:]/g,"_")}.pdf`);
+
+
 });
 </script>
 </body>
