@@ -247,31 +247,38 @@ const itemDescriptions = {
 // Itens por depósito
 const itemsByDeposit = {
   "Carpintaria": [
-    "Chave de Fenda","Alicate Universal","Martelo","Estilete","Trena",
-    "Torque Armador 12","Esquadro 10 para Carpinteiro","Lápis Carpinteiro",
-    "Formão para Madeira","Kit de Chave Combinada","Serra Tico e Teco",
-    "Jogo de Brocas e Soquetes","Parafusadeira Elétrica","Lâmina de Serra Tico-Teco"
+    "Chave de Fenda", "Alicate Universal", "Martelo", "Estilete", "Trena",
+    "Torque Armador 12", "Esquadro 10 para Carpinteiro", "Lápis Carpinteiro",
+    "Formão para Madeira", "Kit de Chave Combinada", "Serra Tico e Teco",
+    "Jogo de Brocas e Soquetes", "Parafusadeira Elétrica", "Lâmina de Serra Tico-Teco"
   ],
+
+  "Depósito 6": [
+    "Kit Cinta Arqueamento"
+  ],
+
   "Depósito 9": [
-    "Trena","Escova de Aço","Martelo","Estilete","Tesoura","Kit Cinta Arqueamento"
+    "Trena", "Escova de Aço", "Martelo", "Estilete", "Tesoura", "Kit Cinta Arqueamento"
   ],
+
   "Depósito 13": [
-    "Tesoura de Corte","Chave Combinada","Trena","Alicate Universal",
-    "Chave de Fenda","Martelo","Estilete","Pé-de-Cabra Torcido","Marreta",
-    "Ferramento","Hands Off"
+    "Tesoura de Corte", "Chave Combinada", "Trena", "Alicate Universal",
+    "Chave de Fenda", "Martelo", "Estilete", "Pé-de-Cabra Torcido", "Marreta",
+    "Ferramento", "Hands Off"
   ],
+
   "Depósito 24": [
-    "Trena","Pé de Cabra Torcido","Tesoura de Corte","Alicate Corta Cabo",
-    "Martelo","Escova de Aço","Chave de Fenda","Kit Cinta Arqueamento"
+    "Trena", "Pé de Cabra Torcido", "Tesoura de Corte", "Alicate Corta Cabo",
+    "Martelo", "Escova de Aço", "Chave de Fenda", "Kit Cinta Arqueamento"
   ],
+
   "Depósito 25": [
-    "Chave de Fenda","Alicate Universal","Martelo","Estilete",
-    "Pé de Cabra Torcido","Trena","Kit Cinta Arqueamento","Grampeador",
-    "Pé de Cabra","Chave inglesa","Alicate de Corte","Chave de Boca", "Chave de Corrente Para Tubos",
-
-
+    "Chave de Fenda", "Alicate Universal", "Martelo", "Estilete",
+    "Pé de Cabra Torcido", "Trena", "Kit Cinta Arqueamento", "Grampeador",
+    "Pé de Cabra", "Chave inglesa", "Alicate de Corte", "Chave de Boca", "Chave de Corrente Para Tubos"
   ]
 };
+
 
 // Ordem personalizada para aparecer no PDF
 const depositOrder = ["Carpintaria", "Depósito 9", "Depósito 13", "Depósito 24", "Depósito 25"];
@@ -372,15 +379,15 @@ document.getElementById("reportBtn").addEventListener("click", async () => {
     "2. Relação de ferramentas do SOP/ARM.......................................................3",
     "3. Inspeção Carpintaria....................................................................3",
     "4. Relação de Ferramentas Inaptas..........................................................6",
-    "5. Inspeção Depósito/D-09..................................................................6",
+    "5. Inspeção Depósito/D-09..................................................................7",
     "6. Relação de Ferramentas Inaptas..........................................................7",
-    "7. Inspeção Depósito/D-13..................................................................8",
+    "7. Inspeção Depósito/D-13..................................................................9",
     "8. Relação de Ferramentas Inaptas.........................................................10",
-    "9. Inspeção Depósito/D-24.................................................................10",
+    "9. Inspeção Depósito/D-24.................................................................12",
     "10. Relação de Ferramentas Inaptas........................................................12",
-    "11. Inspeção Depósito/D-25................................................................12",
+    "11. Inspeção Depósito/D-25................................................................14",
     "12. Relação de Ferramentas Inaptas........................................................15",
-    "13. Assinatura dos Participantes da Inspeção..............................................14",
+    "13. Assinatura dos Participantes da Inspeção..............................................17",
   ];
 
   doc.setFontSize(11);
@@ -412,8 +419,8 @@ sumario.forEach(linha => {
 });
 
 
-  // === ADICIONA NOVA PÁGINA PARA O RESTANTE ===
-  // ---------------------
+
+
 // Segunda página: Cronograma
 // ---------------------
 doc.addPage(); // força nova página
@@ -874,7 +881,8 @@ for (let p = 0; p < fotos.length; p++) {
 }
 
 // Sempre adiciona um espaçamento extra, mesmo sem fotos
-y += (linhaFotoTam > 0 ? linhaFotoTam : 20);
+y += (linhaFotoTam > 0 ? linhaFotoTam + 45 : 45);
+
 
     }
     // Antes de adicionar a última página
@@ -887,7 +895,13 @@ if (y + 200 > doc.internal.pageSize.getHeight()) {
 
   // === ÚLTIMA PÁGINA: Representantes e Usuários ===
 doc.addPage();
-y = 60;
+
+// Adicionar título "Assinaturas" no topo centralizado
+doc.setFont("helvetica", "bold");
+doc.setFontSize(14);
+doc.text("Assinatura e Matrícula", width / 2, 40, { align: "center" });  // Centralizado no topo (y=40 para dar espaço do topo da página)
+y = 60;  // Continua com y=60 para o resto do conteúdo
+
 doc.setFont("helvetica","normal");
 doc.setFontSize(12);
 
@@ -904,6 +918,7 @@ representantes.forEach(text => {
   doc.text(lines, 40, y);
   y += lines.length * 18 + 20; // espaçamento entre blocos
 });
+
 
 
   doc.save(`Checklist_todos_depositos_${dataHora.replace(/[\/\s:]/g,"_")}.pdf`);
